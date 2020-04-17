@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+        https://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/context
+        https://www.springframework.org/schema/context/spring-context.xsd
+        http://www.springframework.org/schema/aop
+        https://www.springframework.org/schema/aop/spring-aop.xsd">
+
+
+    <!--目标对象-->
+    <bean id="personDao" class="com.galaxy.dao.impl.PersonDaoImpl"/>
+
+    <!--配置切面类-->
+    <bean id="tx" class="com.galaxy.util.TransationManager"/>
+
+    <aop:config>
+        <!--声明一个切面-->
+        <aop:aspect id="aspect" ref="tx">
+            <!--声明一个切入点
+                expression:
+                第一个 * 的位置：代表方法的返回值，*:返回值任意
+                第二个 * ：代表com.galaxy.dao.impl包下的所有类
+                第三个 * ：add*代表以add开头的方法
+                (..)    ：可变参数，方法的参数个数和类型都是任意的
+                ||      ：逻辑或
+             -->
+            <aop:pointcut id="personCut"
+                          expression="execution(* com.galaxy.dao.impl.*.add*(..))
+                          || execution(* com.galaxy.dao.impl.*.update*(..))
+                          || execution(* com.galaxy.dao.impl.*.delete*(..))"/>
+            <!--声明通知-->
+            <aop:before method="startTransation" pointcut-ref="personCut"/>
+            <aop:after method="commitTransation" pointcut-ref="personCut"/>
+            <aop:after-throwing method="rollbackTansation" pointcut-ref="personCut"/>
+            <aop:after-returning method="closeSession" pointcut-ref="personCut"/>
+        </aop:aspect>
+    </aop:config>
+</beans>
